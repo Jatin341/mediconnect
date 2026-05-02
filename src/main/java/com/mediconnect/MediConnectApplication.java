@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableJpaAuditing
-@EnableAsyncgi
+@EnableAsync
 @EnableScheduling
 public class MediConnectApplication {
 	public static void main(String[] args) {
