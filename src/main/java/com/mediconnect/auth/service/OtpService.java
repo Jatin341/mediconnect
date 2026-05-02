@@ -1,36 +1,37 @@
 package com.mediconnect.auth.service;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-@RequiredArgsConstructor
 public class OtpService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
-    private static final String OTP_PREFIX = "otp:";
-    private static final Duration OTP_TTL = Duration.ofMinutes(5);
+    private final Map<String, OtpEntry> otpStore = new ConcurrentHashMap<>();
 
     public String generateOtp(String email) {
         String otp = String.format("%06d", new Random().nextInt(999999));
-        redisTemplate.opsForValue().set(OTP_PREFIX + email, otp, OTP_TTL);
+        otpStore.put(email, new OtpEntry(otp,
+                System.currentTimeMillis() + 5 * 60 * 1000));
         return otp;
     }
 
     public boolean verifyOtp(String email, String otp) {
-        Object stored = redisTemplate.opsForValue().get(OTP_PREFIX + email);
-        if (stored != null && stored.toString().equals(otp)) {
-            redisTemplate.delete(OTP_PREFIX + email);
-            return true;
-        }
-        return false;
+        OtpEntry entry = otpStore.get(email);
+        if (entry == null) return false;
+        if (System.currentTimeMillis() > entry.expiry()) return false;
+        if (!entry.otp().equals(otp)) return false;
+        otpStore.remove(email);
+        return true;
     }
 
     public boolean otpExists(String email) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(OTP_PREFIX + email));
+        OtpEntry entry = otpStore.get(email);
+        if (entry == null) return false;
+        return System.currentTimeMillis() < entry.expiry();
     }
+
+    private record OtpEntry(String otp, long expiry) {}
 }

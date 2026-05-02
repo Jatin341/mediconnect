@@ -1,5 +1,6 @@
 package com.mediconnect.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -11,6 +12,7 @@ import org.springframework.data.redis.serializer.*;
 import java.time.Duration;
 
 @Configuration
+@ConditionalOnProperty(name = "spring.data.redis.host", havingValue = "localhost", matchIfMissing = false)
 public class RedisConfig {
 
     @Bean

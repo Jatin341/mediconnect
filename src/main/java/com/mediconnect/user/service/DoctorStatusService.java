@@ -1,35 +1,30 @@
 package com.mediconnect.user.service;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class DoctorStatusService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
-    private static final String ONLINE_KEY = "doctor:online:";
-    private static final Duration TTL = Duration.ofMinutes(5);
+    private final Map<Long, Long> onlineDoctors = new ConcurrentHashMap<>();
+    private static final long TTL_MS = 5 * 60 * 1000; // 5 minutes
 
     public void setOnline(Long doctorId) {
-        redisTemplate.opsForValue().set(ONLINE_KEY + doctorId, "true", TTL);
+        onlineDoctors.put(doctorId, System.currentTimeMillis());
     }
 
     public void setOffline(Long doctorId) {
-        redisTemplate.delete(ONLINE_KEY + doctorId);
+        onlineDoctors.remove(doctorId);
     }
 
     public boolean isOnline(Long doctorId) {
-        return Boolean.TRUE.equals(
-                redisTemplate.hasKey(ONLINE_KEY + doctorId));
+        Long lastSeen = onlineDoctors.get(doctorId);
+        if (lastSeen == null) return false;
+        return System.currentTimeMillis() - lastSeen < TTL_MS;
     }
 
-    // Heartbeat — doctor har 3 min mein ping karega
     public void heartbeat(Long doctorId) {
-        redisTemplate.opsForValue().set(ONLINE_KEY + doctorId, "true", TTL);
+        onlineDoctors.put(doctorId, System.currentTimeMillis());
     }
 }
