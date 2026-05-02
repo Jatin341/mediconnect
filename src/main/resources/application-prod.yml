@@ -1,0 +1,53 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:dummy@gmail.com}
+    password: ${MAIL_PASSWORD:dummypassword}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  port: ${PORT:8080}
+
+jwt:
+  secret: ${JWT_SECRET:mediconnectSuperSecretKeyForJWTSigning2024MustBe256BitsLong!!}
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+razorpay:
+  key-id: ${RAZORPAY_KEY:dummy}
+  key-secret: ${RAZORPAY_SECRET:dummy}
+
+anthropic:
+  api:
+    key: ${ANTHROPIC_KEY:dummy}
+
+logging:
+  level:
+    com.mediconnect: INFO
