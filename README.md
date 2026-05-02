@@ -3,7 +3,7 @@
 > A production-grade full-stack telemedicine platform built with Java 21 + Spring Boot 3
 
 ## 🚀 Live Demo
-[Deploy link — coming soon]
+[Deploy link — https://mediconnect-api-fvp2.onrender.com/]
 
 ## ✨ Features
 
