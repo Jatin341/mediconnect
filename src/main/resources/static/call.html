@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MediConnect — Video Call</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0f172a; color:#e2e8f0; font-family:'Segoe UI',sans-serif;
+               display:flex; flex-direction:column; align-items:center;
+               justify-content:center; min-height:100vh; padding:1rem; }
+        h2 { color:#38bdf8; margin-bottom:1.5rem; font-size:1.5rem; }
+        .video-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem;
+                      width:100%; max-width:900px; margin-bottom:1rem; }
+        video { width:100%; border-radius:12px; background:#1e293b;
+                border:2px solid #334155; aspect-ratio:16/9; object-fit:cover; }
+        .label { text-align:center; color:#94a3b8; font-size:0.85rem; margin-top:0.4rem; }
+        .controls { display:flex; gap:1rem; margin-top:1rem; }
+        .btn { padding:0.7rem 1.5rem; border-radius:8px; border:none;
+               cursor:pointer; font-size:0.95rem; font-weight:600; transition:all 0.2s; }
+        .btn-green { background:#22c55e; color:#fff; }
+        .btn-green:hover { background:#16a34a; }
+        .btn-red { background:#ef4444; color:#fff; }
+        .btn-red:hover { background:#dc2626; }
+        .btn-blue { background:#38bdf8; color:#0f172a; }
+        .btn-blue:hover { background:#0ea5e9; }
+        .status { color:#94a3b8; font-size:0.9rem; margin-top:1rem; }
+        .room-info { background:#1e293b; padding:0.8rem 1.5rem; border-radius:8px;
+                     margin-bottom:1rem; border:1px solid #334155; font-size:0.85rem; }
+    </style>
+</head>
+<body>
+<h2>📹 MediConnect Video Consultation</h2>
+<div class="room-info" id="roomInfo">Room: Loading...</div>
+<div class="video-grid">
+    <div>
+        <video id="localVideo" autoplay muted playsinline></video>
+        <div class="label">You</div>
+    </div>
+    <div>
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="label" id="remoteLabel">Waiting for other person...</div>
+    </div>
+</div>
+<div class="controls">
+    <button class="btn btn-green" onclick="startCall()">📞 Start Call</button>
+    <button class="btn btn-red" onclick="endCall()">📵 End Call</button>
+    <button class="btn btn-blue" onclick="toggleMute()">🎤 Mute</button>
+    <button class="btn btn-blue" onclick="goBack()">🔙 Back</button>
+</div>
+<div class="status" id="status">Click "Start Call" to begin consultation</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
+    const API = 'http://localhost:8081';
+    const params = new URLSearchParams(window.location.search);
+    const roomId = params.get('room');
+    const token = localStorage.getItem('token');
+    const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+    let localStream, peerConnection, stompClient;
+    let isMuted = false;
+
+    document.getElementById('roomInfo').textContent = `Room ID: ${roomId}`;
+
+    const config = {
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    };
+
+    async function startCall() {
+        setStatus('Getting camera & microphone...');
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+            document.getElementById('localVideo').srcObject = localStream;
+            connectSignaling();
+            setStatus('Connected! Waiting for other person...');
+        } catch (e) {
+            setStatus('Camera/mic access denied: ' + e.message);
+        }
+    }
+
+    function connectSignaling() {
+        const socket = new SockJS(`${API}/ws`);
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({}, () => {
+            // Listen for offer
+            stompClient.subscribe(`/topic/signal/${roomId}/offer`, async (msg) => {
+                const signal = JSON.parse(msg.body);
+                if (signal.from === currentUser?.email) return;
+                await handleOffer(signal);
+            });
+            // Listen for answer
+            stompClient.subscribe(`/topic/signal/${roomId}/answer`, async (msg) => {
+                const signal = JSON.parse(msg.body);
+                if (signal.from === currentUser?.email) return;
+                await handleAnswer(signal);
+            });
+            // Listen for ICE candidates
+            stompClient.subscribe(`/topic/signal/${roomId}/ice`, async (msg) => {
+                const signal = JSON.parse(msg.body);
+                if (signal.from === currentUser?.email) return;
+                await handleIceCandidate(signal);
+            });
+            setStatus('Signaling connected. Starting peer connection...');
+            createOffer();
+        });
+    }
+
+    async function createOffer() {
+        peerConnection = createPeerConnection();
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        stompClient.send(`/app/signal/${roomId}/offer`, {},
+            JSON.stringify({ type:'offer', sdp: offer.sdp, from: currentUser?.email }));
+        setStatus('Offer sent. Waiting for answer...');
+    }
+
+    async function handleOffer(signal) {
+        peerConnection = createPeerConnection();
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+        await peerConnection.setRemoteDescription({ type:'offer', sdp: signal.sdp });
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        stompClient.send(`/app/signal/${roomId}/answer`, {},
+            JSON.stringify({ type:'answer', sdp: answer.sdp, from: currentUser?.email }));
+        setStatus('Answer sent. Connecting...');
+    }
+
+    async function handleAnswer(signal) {
+        await peerConnection.setRemoteDescription({ type:'answer', sdp: signal.sdp });
+        setStatus('✅ Connected! Video call active.');
+    }
+
+    async function handleIceCandidate(signal) {
+        if (signal.candidate && peerConnection) {
+            await peerConnection.addIceCandidate(JSON.parse(signal.candidate));
+        }
+    }
+
+    function createPeerConnection() {
+        const pc = new RTCPeerConnection(config);
+        pc.onicecandidate = (e) => {
+            if (e.candidate && stompClient) {
+                stompClient.send(`/app/signal/${roomId}/ice`, {},
+                    JSON.stringify({
+                        type:'ice',
+                        candidate: JSON.stringify(e.candidate),
+                        from: currentUser?.email
+                    }));
+            }
+        };
+        pc.ontrack = (e) => {
+            document.getElementById('remoteVideo').srcObject = e.streams[0];
+            document.getElementById('remoteLabel').textContent = 'Other Person';
+            setStatus('✅ Video call connected!');
+        };
+        pc.onconnectionstatechange = () => {
+            setStatus('Connection: ' + pc.connectionState);
+        };
+        return pc;
+    }
+
+    function toggleMute() {
+        if (!localStream) return;
+        isMuted = !isMuted;
+        localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+        document.querySelector('.btn-blue').textContent = isMuted ? '🔇 Unmute' : '🎤 Mute';
+    }
+
+    function endCall() {
+        if (peerConnection) peerConnection.close();
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        if (stompClient) stompClient.disconnect();
+        document.getElementById('localVideo').srcObject = null;
+        document.getElementById('remoteVideo').srcObject = null;
+        setStatus('Call ended.');
+    }
+
+    function goBack() {
+        endCall();
+        window.location.href = '/';
+    }
+
+    function setStatus(msg) {
+        document.getElementById('status').textContent = msg;
+    }
+
+    // Auto start if room exists
+    if (roomId) startCall();
+</script>
+</body>
+</html>

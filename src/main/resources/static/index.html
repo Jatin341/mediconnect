@@ -1,0 +1,1326 @@
+<!--cat > /mnt/user-data/outputs/index.html << 'HTMLEOF'-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect — Telemedicine Platform</title>
+    <style>
+        :root {
+            --bg:#0a0f1e;--surface:#111827;--surface2:#1a2235;--border:#1f2d45;
+            --primary:#3b82f6;--primary-light:#60a5fa;--accent:#06b6d4;
+            --success:#10b981;--warning:#f59e0b;--danger:#ef4444;
+            --text:#f1f5f9;--muted:#64748b;--muted2:#94a3b8;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+        ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+        /* NAV */
+        nav{background:rgba(17,24,39,0.95);backdrop-filter:blur(12px);padding:0.9rem 2rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
+        .logo{font-size:1.4rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .nav-links a{color:var(--muted2);text-decoration:none;margin-left:1.5rem;cursor:pointer;font-size:0.9rem;transition:color 0.2s;}
+        .nav-links a:hover{color:var(--primary-light);}
+        .user-info{display:flex;align-items:center;gap:0.8rem;}
+        .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem;}
+        .role-badge{padding:0.15rem 0.6rem;border-radius:20px;font-size:0.65rem;font-weight:700;text-transform:uppercase;}
+        .role-doctor{background:#1e3a5f44;color:#60a5fa;border:1px solid #1e3a5f;}
+        .role-patient{background:#06443044;color:#34d399;border:1px solid #064e3b;}
+        .role-admin{background:#44200044;color:#fb923c;border:1px solid #7c2d12;}
+        .logout-btn{color:var(--danger);cursor:pointer;font-size:0.85rem;background:none;border:none;margin-left:0.5rem;}
+
+        /* NOTIFICATION BELL */
+        .notif-bell{position:relative;cursor:pointer;font-size:1.3rem;margin-right:0.5rem;}
+        .notif-badge{position:absolute;top:-5px;right:-5px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:0.65rem;display:flex;align-items:center;justify-content:center;font-weight:700;display:none;}
+        .notif-badge.show{display:flex;}
+        .notif-dropdown{position:absolute;top:45px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;width:320px;max-height:400px;overflow-y:auto;z-index:200;display:none;box-shadow:0 10px 40px rgba(0,0,0,0.4);}
+        .notif-dropdown.open{display:block;}
+        .notif-header{padding:0.8rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+        .notif-header h4{font-size:0.9rem;font-weight:600;}
+        .notif-item{padding:0.8rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.2s;}
+        .notif-item:hover{background:var(--surface2);}
+        .notif-item.unread{border-left:3px solid var(--primary);}
+        .notif-item p{font-size:0.83rem;color:var(--text);}
+        .notif-item span{font-size:0.72rem;color:var(--muted2);}
+        .notif-empty{padding:1.5rem;text-align:center;color:var(--muted2);font-size:0.85rem;}
+
+        /* HERO */
+        .hero{text-align:center;padding:6rem 2rem 4rem;background:radial-gradient(ellipse at top,#1a2a4a 0%,var(--bg) 70%);position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;top:-50%;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,#3b82f620 0%,transparent 70%);pointer-events:none;}
+        .hero h1{font-size:3.5rem;font-weight:900;line-height:1.1;margin-bottom:1.2rem;letter-spacing:-1px;}
+        .hero h1 span{background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero p{font-size:1.15rem;color:var(--muted2);margin-bottom:2.5rem;max-width:550px;margin-left:auto;margin-right:auto;}
+        .hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+
+        /* BUTTONS */
+        .btn{padding:0.7rem 1.8rem;border-radius:10px;border:none;cursor:pointer;font-size:0.95rem;font-weight:600;transition:all 0.2s;display:inline-flex;align-items:center;gap:0.4rem;}
+        .btn-primary{background:var(--primary);color:#fff;}.btn-primary:hover{background:#2563eb;transform:translateY(-1px);}
+        .btn-outline{background:transparent;color:var(--primary-light);border:1.5px solid var(--primary);}.btn-outline:hover{background:#3b82f615;}
+        .btn-success{background:var(--success);color:#fff;}.btn-success:hover{background:#059669;}
+        .btn-danger{background:var(--danger);color:#fff;}
+        .btn-warning{background:var(--warning);color:#000;}
+        .btn-sm{padding:0.35rem 0.9rem;font-size:0.8rem;border-radius:7px;}
+        .btn-xs{padding:0.25rem 0.7rem;font-size:0.75rem;border-radius:6px;}
+
+        /* FEATURES */
+        .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem;padding:3rem 2rem 4rem;max-width:1200px;margin:0 auto;}
+        .feature-card{background:var(--surface);border-radius:14px;padding:1.8rem;border:1px solid var(--border);transition:all 0.2s;}
+        .feature-card:hover{transform:translateY(-3px);border-color:var(--primary);}
+        .feature-icon{font-size:2rem;margin-bottom:0.8rem;}
+        .feature-card h3{color:var(--text);margin-bottom:0.4rem;font-size:1rem;}
+        .feature-card p{color:var(--muted2);font-size:0.85rem;line-height:1.6;}
+
+        /* DASHBOARD */
+        .dashboard{display:none;max-width:1300px;margin:0 auto;padding:1.5rem 2rem;}
+        .dashboard.active{display:block;}
+        .dash-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+        .dash-header h2{font-size:1.4rem;font-weight:700;}
+
+        /* STATS */
+        .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem;}
+        .stat-card{background:var(--surface);border-radius:12px;padding:1.2rem;border:1px solid var(--border);text-align:center;}
+        .stat-card .val{font-size:2rem;font-weight:800;color:var(--primary-light);}
+        .stat-card .lbl{font-size:0.8rem;color:var(--muted2);margin-top:0.2rem;}
+
+        /* TABS */
+        .tabs{display:flex;gap:0.3rem;margin-bottom:1.5rem;background:var(--surface);padding:0.4rem;border-radius:12px;border:1px solid var(--border);overflow-x:auto;}
+        .tab{padding:0.5rem 1rem;cursor:pointer;color:var(--muted2);border-radius:8px;font-weight:500;font-size:0.85rem;transition:all 0.2s;white-space:nowrap;}
+        .tab:hover{color:var(--text);background:var(--border);}
+        .tab.active{color:#fff;background:var(--primary);}
+        .tab-content{display:none;}.tab-content.active{display:block;}
+        .section-title{font-size:1rem;font-weight:600;color:var(--text);margin-bottom:1rem;}
+
+        /* SEARCH */
+        .search-bar{display:flex;gap:0.8rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+        .search-bar input,.search-bar select{padding:0.6rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;flex:1;min-width:140px;}
+        .search-bar input:focus,.search-bar select:focus{outline:none;border-color:var(--primary);}
+
+        /* CARDS */
+        .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;}
+        .info-card{background:var(--surface);border-radius:14px;padding:1.4rem;border:1px solid var(--border);transition:all 0.2s;}
+        .info-card:hover{border-color:var(--primary);transform:translateY(-2px);}
+        .info-card h3{color:var(--text);font-size:1rem;margin-bottom:0.25rem;}
+        .info-card .spec{font-size:0.8rem;font-weight:600;margin-bottom:0.6rem;}
+        .info-card .info{color:var(--muted2);font-size:0.82rem;margin-bottom:0.25rem;}
+        .info-card .card-footer{margin-top:0.8rem;display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;}
+
+        .online-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;}
+        .dot-green{background:var(--success);box-shadow:0 0 6px var(--success);}
+        .dot-red{background:var(--danger);}
+
+        /* BADGES */
+        .badge{display:inline-flex;align-items:center;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.72rem;font-weight:600;}
+        .badge-green{background:#06443044;color:#34d399;border:1px solid #064e3b;}
+        .badge-red{background:#7f1d1d44;color:#fca5a5;border:1px solid #7f1d1d;}
+        .badge-blue{background:#1e3a5f44;color:#93c5fd;border:1px solid #1e3a5f;}
+        .badge-yellow{background:#71390044;color:#fde68a;border:1px solid #713f12;}
+
+        /* STARS */
+        .stars{color:#fbbf24;font-size:0.9rem;}
+        .star-input{display:flex;gap:0.3rem;margin:0.5rem 0;}
+        .star-input span{font-size:1.5rem;cursor:pointer;color:var(--muted);transition:color 0.1s;}
+        .star-input span.active{color:#fbbf24;}
+
+        /* APPOINTMENTS */
+        .appointment-item{background:var(--surface);border-radius:12px;padding:1.1rem;margin-bottom:0.7rem;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;transition:border-color 0.2s;}
+        .appointment-item:hover{border-color:var(--primary);}
+        .appt-info h4{color:var(--text);font-size:0.95rem;margin-bottom:0.3rem;}
+        .appt-info p{color:var(--muted2);font-size:0.82rem;margin-bottom:0.15rem;}
+        .appt-actions{display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;flex-shrink:0;}
+
+        /* MEDICAL */
+        .medical-item{background:var(--surface);border-radius:12px;padding:1.2rem;margin-bottom:0.7rem;border:1px solid var(--border);}
+        .medical-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.7rem;}
+        .medical-item h4{color:var(--text);font-size:0.95rem;}
+        .medical-item .meta{color:var(--muted2);font-size:0.8rem;margin-top:0.2rem;}
+        .medical-item .detail{color:var(--muted2);font-size:0.83rem;margin-top:0.35rem;}
+        .medical-item .treatment{color:#34d399;font-size:0.83rem;margin-top:0.35rem;}
+
+        /* CALENDAR */
+        .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0.3rem;margin-top:1rem;}
+        .cal-day-header{text-align:center;font-size:0.75rem;color:var(--muted2);font-weight:600;padding:0.3rem;}
+        .cal-day{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.5rem;min-height:80px;cursor:pointer;transition:border-color 0.2s;}
+        .cal-day:hover{border-color:var(--primary);}
+        .cal-day.today{border-color:var(--primary);background:#1e3a5f22;}
+        .cal-day.has-appt{border-color:var(--success);}
+        .cal-day-num{font-size:0.8rem;font-weight:600;margin-bottom:0.3rem;}
+        .cal-appt-dot{width:6px;height:6px;background:var(--success);border-radius:50%;display:inline-block;margin:1px;}
+        .cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+        .cal-nav h3{font-size:1rem;font-weight:600;}
+
+        /* ADMIN TABLE */
+        .admin-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+        .admin-table th{background:var(--surface2);color:var(--muted2);padding:0.7rem 1rem;text-align:left;font-weight:600;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;}
+        .admin-table td{padding:0.7rem 1rem;border-bottom:1px solid var(--border);color:var(--text);}
+        .admin-table tr:hover td{background:var(--surface2);}
+
+        /* FORM */
+        .profile-form{max-width:600px;}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+        .form-group{margin-bottom:1rem;}
+        .form-group label{display:block;color:var(--muted2);font-size:0.82rem;margin-bottom:0.35rem;}
+        .form-group input,.form-group select,.form-group textarea{width:100%;padding:0.6rem 0.9rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);}
+
+        /* REPORT UPLOAD */
+        .upload-area{border:2px dashed var(--border);border-radius:10px;padding:2rem;text-align:center;cursor:pointer;transition:border-color 0.2s;color:var(--muted2);}
+        .upload-area:hover{border-color:var(--primary);}
+        .report-list{margin-top:1rem;}
+        .report-item{background:var(--surface2);border-radius:8px;padding:0.7rem 1rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;font-size:0.85rem;}
+
+        /* MODAL */
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;justify-content:center;align-items:center;padding:1rem;backdrop-filter:blur(4px);}
+        .modal-overlay.active{display:flex;}
+        .modal{background:var(--surface);border-radius:18px;padding:2rem;width:100%;max-width:480px;border:1px solid var(--border);max-height:92vh;overflow-y:auto;}
+        .modal h2{color:var(--text);margin-bottom:1.5rem;font-size:1.3rem;}
+        .modal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;}
+        .modal-close{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:0.88rem;}
+
+        .alert{padding:0.7rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.88rem;display:none;}
+        .alert-success{background:#06443044;color:#34d399;border:1px solid #064e3b;display:block;}
+        .alert-error{background:#7f1d1d44;color:#fca5a5;border:1px solid #7f1d1d;display:block;}
+
+        /* AI SYMPTOM */
+        .symptom-box{background:var(--surface);border-radius:14px;padding:1.5rem;border:1px solid var(--border);max-width:700px;}
+        .symptom-result{background:var(--surface2);border-radius:10px;padding:1.2rem;margin-top:1rem;border:1px solid var(--primary);display:none;}
+        .symptom-result.show{display:block;}
+        .symptom-result h4{color:var(--primary-light);margin-bottom:0.5rem;}
+
+        /* ANALYTICS */
+        .analytics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem;}
+        .analytics-card{background:var(--surface);border-radius:12px;padding:1.5rem;border:1px solid var(--border);text-align:center;}
+        .analytics-card .a-val{font-size:2.5rem;font-weight:800;}
+        .analytics-card .a-lbl{color:var(--muted2);font-size:0.85rem;margin-top:0.3rem;}
+        .analytics-card .a-sub{color:var(--muted);font-size:0.78rem;margin-top:0.2rem;}
+
+        /* PRESCRIPTION */
+        .medicine-row{display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 2fr auto;gap:0.5rem;margin-bottom:0.5rem;align-items:center;}
+        .medicine-row input{padding:0.5rem 0.7rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;}
+
+        /* RESCHEDULE */
+        .slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;margin-top:0.8rem;max-height:200px;overflow-y:auto;}
+        .slot-btn{padding:0.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.8rem;text-align:center;transition:all 0.2s;}
+        .slot-btn:hover{border-color:var(--primary);background:#1e3a5f22;}
+        .slot-btn.selected{border-color:var(--primary);background:#1e3a5f;}
+
+        /* OTP */
+        .otp-inputs{display:flex;gap:0.5rem;justify-content:center;margin:1rem 0;}
+        .otp-inputs input{width:50px;height:50px;text-align:center;font-size:1.5rem;font-weight:700;background:var(--surface2);border:2px solid var(--border);border-radius:10px;color:var(--text);}
+        .otp-inputs input:focus{outline:none;border-color:var(--primary);}
+
+        /* PAYMENT */
+        .payment-summary{background:var(--surface2);border-radius:10px;padding:1rem;margin-bottom:1rem;}
+        .payment-row{display:flex;justify-content:space-between;margin-bottom:0.5rem;font-size:0.88rem;color:var(--muted2);}
+        .payment-total{font-weight:700;color:var(--text);font-size:1rem;border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.5rem;}
+
+        /* CHAT */
+        .chat-modal{background:var(--surface);border-radius:18px;width:100%;max-width:480px;border:1px solid var(--border);display:flex;flex-direction:column;height:72vh;}
+        .chat-header{padding:1rem 1.4rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:18px 18px 0 0;}
+        .chat-header h3{color:var(--text);font-size:0.95rem;}
+        .chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.5rem;}
+        .chat-msg{max-width:78%;padding:0.55rem 0.9rem;border-radius:12px;font-size:0.88rem;line-height:1.4;}
+        .chat-msg.sent{background:#1e3a5f;color:var(--text);align-self:flex-end;}
+        .chat-msg.received{background:var(--surface2);color:var(--text);align-self:flex-start;border:1px solid var(--border);}
+        .chat-msg .msg-sender{font-size:0.68rem;color:var(--accent);margin-bottom:0.2rem;font-weight:600;}
+        .chat-input-area{padding:0.8rem 1rem;border-top:1px solid var(--border);display:flex;gap:0.5rem;}
+        .chat-input-area input{flex:1;padding:0.55rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;}
+        .chat-input-area input:focus{outline:none;border-color:var(--primary);}
+
+        .empty-state{text-align:center;padding:3rem;color:var(--muted2);}
+        .empty-state .empty-icon{font-size:3rem;margin-bottom:0.8rem;opacity:0.6;}
+        .loading{color:var(--muted2);font-style:italic;padding:1rem 0;font-size:0.88rem;}
+        .divider{border:none;border-top:1px solid var(--border);margin:1.2rem 0;}
+
+        @media(max-width:640px){.hero h1{font-size:2.2rem;}.form-row{grid-template-columns:1fr;}.dashboard{padding:1rem;}.medicine-row{grid-template-columns:1fr 1fr;}.calendar-grid{grid-template-columns:repeat(7,1fr);}}
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <div class="logo">🏥 MediConnect</div>
+    <div class="nav-links" id="navLinks">
+        <a onclick="showModal('loginModal')">Login</a>
+        <a onclick="showModal('registerModal')">Register</a>
+    </div>
+    <div id="userNav" style="display:none;">
+        <div class="user-info">
+            <!-- Notification Bell -->
+            <div class="notif-bell" onclick="toggleNotifDropdown()" id="notifBell">
+                🔔
+                <div class="notif-badge" id="notifBadge">0</div>
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div class="notif-header">
+                        <h4>🔔 Notifications</h4>
+                        <button class="btn-xs btn-outline" onclick="clearNotifications(event)">Clear</button>
+                    </div>
+                    <div id="notifList"><div class="notif-empty">No notifications</div></div>
+                </div>
+            </div>
+            <div class="avatar" id="userAvatar">U</div>
+            <div>
+                <div style="color:var(--text);font-size:0.88rem;font-weight:600;" id="userName"></div>
+                <span class="role-badge" id="userRoleBadge"></span>
+            </div>
+            <button class="logout-btn" onclick="logout()">← Logout</button>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<div id="heroSection">
+    <div class="hero">
+        <h1>Your Health,<br><span>Connected.</span></h1>
+        <p>Book appointments, consult doctors, get prescriptions — securely and instantly.</p>
+        <div class="hero-btns">
+            <button class="btn btn-primary" onclick="showModal('registerModal')">🚀 Get Started</button>
+            <button class="btn btn-outline" onclick="showModal('loginModal')">🔐 Login</button>
+        </div>
+    </div>
+    <div class="features">
+        <div class="feature-card"><div class="feature-icon">📅</div><h3>Smart Booking</h3><p>Redis-cached slot availability for instant booking.</p></div>
+        <div class="feature-card"><div class="feature-icon">💬</div><h3>Real-time Chat</h3><p>WebSocket messaging between doctor and patient.</p></div>
+        <div class="feature-card"><div class="feature-icon">📹</div><h3>Video Call</h3><p>WebRTC peer-to-peer video consultations.</p></div>
+        <div class="feature-card"><div class="feature-icon">📄</div><h3>PDF Prescription</h3><p>Digital prescriptions with email delivery.</p></div>
+        <div class="feature-card"><div class="feature-icon">🤖</div><h3>AI Symptom Check</h3><p>Get specialist recommendations instantly.</p></div>
+        <div class="feature-card"><div class="feature-icon">💳</div><h3>Online Payment</h3><p>Razorpay integration for consultation fees.</p></div>
+        <div class="feature-card"><div class="feature-icon">📊</div><h3>Analytics</h3><p>Doctor earnings and appointment statistics.</p></div>
+        <div class="feature-card"><div class="feature-icon">🔔</div><h3>Real-time Alerts</h3><p>Instant WebSocket notifications for all events.</p></div>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+    <div class="dash-header">
+        <h2 id="dashboardTitle">Dashboard</h2>
+    </div>
+
+    <div class="tabs" id="mainTabs">
+        <div class="tab active" id="tab1" onclick="switchTab('first',this)">—</div>
+        <div class="tab" onclick="switchTab('appointments',this)">📅 Appointments</div>
+        <div class="tab" id="tab3" onclick="switchTab('medical',this)">📋 Medical</div>
+        <div class="tab" id="calendarTabBtn" style="display:none;" onclick="switchTab('calendar',this)">📆 Calendar</div>
+        <div class="tab" id="reportsTabBtn" onclick="switchTab('reports',this)">📁 Reports</div>
+        <div class="tab" id="tab4" onclick="switchTab('profile',this)">👤 Profile</div>
+        <div class="tab" onclick="switchTab('symptoms',this)">🤖 AI Symptom</div>
+        <div class="tab" id="analyticsTabBtn" style="display:none;" onclick="switchTab('analytics',this)">📊 Analytics</div>
+        <div class="tab" id="adminTabBtn" style="display:none;" onclick="switchTab('admin',this)">🛡️ Admin</div>
+    </div>
+
+    <!-- First Tab -->
+    <div class="tab-content active" id="tab-first">
+        <div class="search-bar" id="searchBar">
+            <input type="text" id="searchName" placeholder="🔍 Search doctor..." oninput="filterDoctors()">
+            <select id="filterSpec" onchange="filterDoctors()">
+                <option value="">All Specializations</option>
+                <option>GENERAL_PHYSICIAN</option><option>CARDIOLOGIST</option><option>NEUROLOGIST</option>
+                <option>DERMATOLOGIST</option><option>ORTHOPEDIC</option><option>PEDIATRICIAN</option>
+                <option>PSYCHIATRIST</option><option>OPHTHALMOLOGIST</option><option>ENT_SPECIALIST</option>
+                <option>DIABETOLOGIST</option><option>ONCOLOGIST</option>
+            </select>
+            <input type="number" id="filterMaxFee" placeholder="💰 Max fee ₹" oninput="filterDoctors()" style="max-width:140px;">
+        </div>
+        <p class="section-title" id="firstTabTitle">Loading...</p>
+        <div class="card-grid" id="firstTabGrid"><p class="loading">Loading...</p></div>
+    </div>
+
+    <!-- Appointments Tab -->
+    <div class="tab-content" id="tab-appointments">
+        <p class="section-title" id="appointmentTitle">My Appointments</p>
+        <div id="appointmentList"><p class="loading">Loading...</p></div>
+    </div>
+
+    <!-- Medical Tab -->
+    <div class="tab-content" id="tab-medical">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <p class="section-title" id="medicalTitle" style="margin-bottom:0;">Medical History</p>
+            <div id="addPrescriptionBtn" style="display:none;">
+                <button class="btn btn-success btn-sm" onclick="showModal('prescriptionModal')">📄 Generate Prescription</button>
+            </div>
+        </div>
+        <div id="medicalList"><p class="loading">Loading...</p></div>
+    </div>
+
+    <!-- Calendar Tab (Doctor) -->
+    <div class="tab-content" id="tab-calendar">
+        <div class="cal-nav">
+            <button class="btn btn-outline btn-sm" onclick="changeMonth(-1)">← Prev</button>
+            <h3 id="calMonthYear"></h3>
+            <button class="btn btn-outline btn-sm" onclick="changeMonth(1)">Next →</button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div id="calDayDetail" style="margin-top:1rem;"></div>
+    </div>
+
+    <!-- Reports Tab -->
+    <div class="tab-content" id="tab-reports">
+        <p class="section-title">📁 Medical Reports</p>
+        <div class="upload-area" onclick="document.getElementById('reportFileInput').click()">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">📤</div>
+            <p>Click to upload report (PDF, Image)</p>
+            <p style="font-size:0.78rem;margin-top:0.3rem;">Blood test, X-ray, MRI, etc.</p>
+        </div>
+        <input type="file" id="reportFileInput" style="display:none;" accept=".pdf,.jpg,.jpeg,.png" onchange="uploadReport(this)">
+        <div id="reportsList" style="margin-top:1rem;"><p class="loading">Loading reports...</p></div>
+    </div>
+
+    <!-- Profile Tab -->
+    <div class="tab-content" id="tab-profile">
+        <p class="section-title">👤 My Profile</p>
+        <div class="profile-form" id="profileForm"><p class="loading">Loading...</p></div>
+    </div>
+
+    <!-- AI Symptom Tab -->
+    <div class="tab-content" id="tab-symptoms">
+        <p class="section-title">🤖 AI Symptom Checker</p>
+        <div class="symptom-box">
+            <p style="color:var(--muted2);font-size:0.88rem;margin-bottom:1rem;">Describe your symptoms and get a specialist recommendation instantly.</p>
+            <div class="form-group">
+                <label>Your Symptoms</label>
+                <textarea id="symptomsInput" rows="4" placeholder="e.g. I have chest pain, shortness of breath for 2 days..." style="resize:vertical;"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="checkSymptoms()">🔍 Analyze Symptoms</button>
+            <div class="symptom-result" id="symptomResult">
+                <h4>💡 Recommendation</h4>
+                <p id="symptomResultText"></p>
+                <div style="margin-top:0.8rem;padding-top:0.8rem;border-top:1px solid var(--border);">
+                    <p style="color:var(--muted2);font-size:0.8rem;">⚠️ AI suggestion only. Please consult a doctor for proper diagnosis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div class="tab-content" id="tab-analytics">
+        <p class="section-title">📊 Analytics</p>
+        <div class="analytics-grid" id="analyticsGrid"><p class="loading">Loading...</p></div>
+    </div>
+
+    <!-- Admin Tab -->
+    <div class="tab-content" id="tab-admin">
+        <div class="stats-row" id="adminStatsGrid"></div>
+        <div class="tabs" style="margin-bottom:1rem;">
+            <div class="tab active" onclick="switchAdminTab('doctors',this)">🩺 Doctors</div>
+            <div class="tab" onclick="switchAdminTab('patients',this)">👥 Patients</div>
+            <div class="tab" onclick="switchAdminTab('appointments',this)">📅 Appointments</div>
+            <div class="tab" onclick="switchAdminTab('platform',this)">📊 Platform</div>
+        </div>
+        <div id="adminContent"><p class="loading">Loading...</p></div>
+    </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- LOGIN -->
+<div class="modal-overlay" id="loginModal">
+    <div class="modal">
+        <h2>🔐 Login</h2>
+        <div id="loginAlert"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+        <div class="modal-footer">
+            <div>
+                <button class="modal-close" onclick="closeModal('loginModal')">Cancel</button>
+                <a onclick="closeModal('loginModal');showModal('forgotModal')" style="color:var(--accent);font-size:0.82rem;cursor:pointer;margin-left:1rem;">Forgot Password?</a>
+            </div>
+            <button class="btn btn-primary" onclick="login()">Login →</button>
+        </div>
+    </div>
+</div>
+
+<!-- REGISTER -->
+<div class="modal-overlay" id="registerModal">
+    <div class="modal">
+        <h2>📝 Create Account</h2>
+        <div id="registerAlert"></div>
+        <div class="form-group"><label>Full Name</label><input type="text" id="regName" placeholder="John Doe"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="regEmail" placeholder="john@example.com"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="regPassword" placeholder="Min 6 characters"></div>
+        <div class="form-group"><label>Phone</label><input type="text" id="regPhone" placeholder="9999999999"></div>
+        <div class="form-group">
+            <label>I am a</label>
+            <select id="regRole" onchange="toggleDoctorFields()">
+                <option value="PATIENT">Patient</option>
+                <option value="DOCTOR">Doctor</option>
+            </select>
+        </div>
+        <div id="doctorFields" style="display:none;">
+            <hr class="divider">
+            <div class="form-group"><label>Specialization</label>
+                <select id="regSpec">
+                    <option>GENERAL_PHYSICIAN</option><option>CARDIOLOGIST</option><option>NEUROLOGIST</option>
+                    <option>DERMATOLOGIST</option><option>ORTHOPEDIC</option><option>PEDIATRICIAN</option>
+                    <option>PSYCHIATRIST</option><option>OPHTHALMOLOGIST</option><option>ENT_SPECIALIST</option>
+                    <option>DIABETOLOGIST</option><option>ONCOLOGIST</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Experience (yrs)</label><input type="number" id="regExp" placeholder="5"></div>
+                <div class="form-group"><label>Fee (₹)</label><input type="number" id="regFee" placeholder="500"></div>
+            </div>
+            <div class="form-group"><label>Qualification</label><input type="text" id="regQual" placeholder="MBBS MD"></div>
+            <div class="form-group"><label>Hospital Name</label><input type="text" id="regHospital" placeholder="City Hospital"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-close" onclick="closeModal('registerModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="register()">Create Account →</button>
+        </div>
+    </div>
+</div>
+
+<!-- FORGOT PASSWORD -->
+<div class="modal-overlay" id="forgotModal">
+    <div class="modal">
+        <h2>🔑 Forgot Password</h2>
+        <div id="forgotAlert"></div>
+        <div id="forgotStep1">
+            <p style="color:var(--muted2);font-size:0.88rem;margin-bottom:1rem;">Enter your email to receive OTP.</p>
+            <div class="form-group"><label>Email</label><input type="email" id="forgotEmail" placeholder="you@example.com"></div>
+            <div class="modal-footer">
+                <button class="modal-close" onclick="closeModal('forgotModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="sendOtp()">Send OTP →</button>
+            </div>
+        </div>
+        <div id="forgotStep2" style="display:none;">
+            <p style="color:var(--muted2);font-size:0.88rem;margin-bottom:1rem;">Enter 6-digit OTP sent to your email.</p>
+            <div class="otp-inputs">
+                <input type="text" maxlength="1" oninput="otpMove(this,1)" id="otp0">
+                <input type="text" maxlength="1" oninput="otpMove(this,2)" id="otp1">
+                <input type="text" maxlength="1" oninput="otpMove(this,3)" id="otp2">
+                <input type="text" maxlength="1" oninput="otpMove(this,4)" id="otp3">
+                <input type="text" maxlength="1" oninput="otpMove(this,5)" id="otp4">
+                <input type="text" maxlength="1" id="otp5">
+            </div>
+            <div class="form-group"><label>New Password</label><input type="password" id="newPassword" placeholder="New password"></div>
+            <div class="modal-footer">
+                <button class="modal-close" onclick="closeModal('forgotModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="resetPassword()">Reset →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- REVIEW -->
+<div class="modal-overlay" id="reviewModal">
+    <div class="modal">
+        <h2>⭐ Rate Doctor</h2>
+        <div id="reviewAlert"></div>
+        <div class="star-input" id="starInput">
+            <span onclick="setRating(1)">★</span><span onclick="setRating(2)">★</span>
+            <span onclick="setRating(3)">★</span><span onclick="setRating(4)">★</span>
+            <span onclick="setRating(5)">★</span>
+        </div>
+        <input type="hidden" id="reviewDoctorId">
+        <div class="modal-footer">
+            <button class="modal-close" onclick="closeModal('reviewModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitReview()">Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- PRESCRIPTION -->
+<div class="modal-overlay" id="prescriptionModal">
+    <div class="modal" style="max-width:750px;">
+        <h2>📄 Generate Prescription</h2>
+        <div id="prescAlert"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Patient ID</label><input type="number" id="prescPatientId" placeholder="Patient ID"></div>
+            <div class="form-group"><label>Medical History ID (optional)</label><input type="number" id="prescHistoryId" placeholder="Optional"></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="prescNotes" rows="2" placeholder="Additional notes..."></textarea></div>
+        <hr class="divider">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;">
+            <p style="font-weight:600;color:var(--text);">💊 Medicines</p>
+            <button class="btn btn-outline btn-sm" onclick="addMedicineRow()">+ Add</button>
+        </div>
+        <div style="font-size:0.72rem;color:var(--muted2);display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 2fr auto;gap:0.5rem;margin-bottom:0.3rem;padding:0 0.2rem;">
+            <span>Medicine</span><span>Dosage</span><span>Frequency</span><span>Duration</span><span>Instructions</span><span></span>
+        </div>
+        <div id="medicineRows"></div>
+        <div class="modal-footer">
+            <button class="modal-close" onclick="closeModal('prescriptionModal')">Cancel</button>
+            <button class="btn btn-success" onclick="generatePrescription()">📄 Download PDF</button>
+        </div>
+    </div>
+</div>
+
+<!-- RESCHEDULE -->
+<div class="modal-overlay" id="rescheduleModal">
+    <div class="modal">
+        <h2>📅 Reschedule Appointment</h2>
+        <div id="rescheduleAlert"></div>
+        <div class="form-group">
+            <label>Select New Date</label>
+            <input type="date" id="rescheduleDate" onchange="loadRescheduleSlots()" min="">
+        </div>
+        <div id="rescheduleSlotsContainer" style="display:none;">
+            <p style="color:var(--muted2);font-size:0.85rem;margin-bottom:0.5rem;">Available slots:</p>
+            <div class="slot-grid" id="rescheduleSlots"></div>
+        </div>
+        <input type="hidden" id="rescheduleApptId">
+        <input type="hidden" id="rescheduleSelectedSlot">
+        <input type="hidden" id="rescheduleDoctorId">
+        <div class="modal-footer">
+            <button class="modal-close" onclick="closeModal('rescheduleModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmReschedule()">Reschedule →</button>
+        </div>
+    </div>
+</div>
+
+<!-- PAYMENT -->
+<div class="modal-overlay" id="paymentModal">
+    <div class="modal">
+        <h2>💳 Pay Consultation Fee</h2>
+        <div id="paymentAlert"></div>
+        <div class="payment-summary">
+            <div class="payment-row"><span>Doctor</span><span id="payDoctorName">—</span></div>
+            <div class="payment-row"><span>Appointment ID</span><span id="payApptId">—</span></div>
+            <div class="payment-row payment-total"><span>Total</span><span id="payAmount">—</span></div>
+        </div>
+        <p style="color:var(--muted2);font-size:0.82rem;margin-bottom:1rem;">Secure payment via Razorpay.</p>
+        <input type="hidden" id="payAppointmentId">
+        <input type="hidden" id="payAmountValue">
+        <div class="modal-footer">
+            <button class="modal-close" onclick="closeModal('paymentModal')">Cancel</button>
+            <button class="btn btn-success" onclick="initiatePayment()">💳 Pay Now</button>
+        </div>
+    </div>
+</div>
+
+<!-- CHAT -->
+<div class="modal-overlay" id="chatModal">
+    <div class="chat-modal">
+        <div class="chat-header">
+            <h3 id="chatTitle">💬 Consultation</h3>
+            <button class="modal-close" onclick="closeChat()">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Type message..." onkeypress="if(event.key==='Enter')sendChatMessage()">
+            <button class="btn btn-primary btn-sm" onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
+    const API='http://localhost:8081';
+    let token=localStorage.getItem('token');
+    let currentUser=JSON.parse(localStorage.getItem('user')||'null');
+    let stompClient=null,notifStompClient=null,currentRoomId=null;
+    let allDoctors=[],heartbeatInterval=null;
+    let notifications=[],calendarDate=new Date();
+
+    if(token&&currentUser)showDashboard();
+
+    // ===== MODAL =====
+    function showModal(id){document.getElementById(id).classList.add('active');}
+    function closeModal(id){document.getElementById(id).classList.remove('active');}
+    function toggleDoctorFields(){document.getElementById('doctorFields').style.display=document.getElementById('regRole').value==='DOCTOR'?'block':'none';}
+
+    // ===== NOTIFICATIONS =====
+    function toggleNotifDropdown(){document.getElementById('notifDropdown').classList.toggle('open');}
+    document.addEventListener('click',e=>{if(!e.target.closest('#notifBell'))document.getElementById('notifDropdown').classList.remove('open');});
+
+    function addNotification(msg,type){
+        notifications.unshift({msg,type,time:new Date().toLocaleTimeString('en-IN'),read:false});
+        renderNotifications();
+    }
+
+    function renderNotifications(){
+        const list=document.getElementById('notifList');
+        const badge=document.getElementById('notifBadge');
+        const unread=notifications.filter(n=>!n.read).length;
+        if(unread>0){badge.textContent=unread>9?'9+':unread;badge.classList.add('show');}
+        else{badge.classList.remove('show');}
+        if(!notifications.length){list.innerHTML='<div class="notif-empty">No notifications</div>';return;}
+        list.innerHTML=notifications.slice(0,20).map((n,i)=>`
+            <div class="notif-item ${n.read?'':'unread'}" onclick="markRead(${i})">
+                <p>${n.msg}</p>
+                <span>${n.time}</span>
+            </div>`).join('');
+    }
+
+    function markRead(i){notifications[i].read=true;renderNotifications();}
+    function clearNotifications(e){e.stopPropagation();notifications=[];renderNotifications();}
+
+    function connectNotifications(){
+        if(!currentUser)return;
+        const socket=new SockJS(`${API}/ws`);
+        notifStompClient=Stomp.over(socket);
+        notifStompClient.debug=null;
+        notifStompClient.connect({},()=>{
+            notifStompClient.subscribe(`/topic/notifications/${currentUser.userId}`,msg=>{
+                const data=JSON.parse(msg.body);
+                addNotification(data.message,data.type);
+            });
+        });
+    }
+
+    // ===== AUTH =====
+    async function login(){
+        const email=document.getElementById('loginEmail').value.trim();
+        const password=document.getElementById('loginPassword').value;
+        if(!email||!password){showAlert('loginAlert','Fill all fields','error');return;}
+        try{
+            const res=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+            const data=await res.json();
+            if(res.ok){
+                token=data.accessToken;
+                currentUser={userId:data.userId,email:data.email,role:data.role};
+                localStorage.setItem('token',token);
+                localStorage.setItem('user',JSON.stringify(currentUser));
+                closeModal('loginModal');
+                showDashboard();
+            }else{showAlert('loginAlert',data.message||'Login failed','error');}
+        }catch(e){showAlert('loginAlert','Server error','error');}
+    }
+
+    async function register(){
+        const role=document.getElementById('regRole').value;
+        const body={fullName:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),password:document.getElementById('regPassword').value,phone:document.getElementById('regPhone').value.trim(),role};
+        if(role==='DOCTOR'){body.specialization=document.getElementById('regSpec').value;body.experienceYears=parseInt(document.getElementById('regExp').value)||0;body.qualification=document.getElementById('regQual').value.trim();body.hospitalName=document.getElementById('regHospital').value.trim();body.consultationFee=parseFloat(document.getElementById('regFee').value)||0;}
+        try{
+            const res=await fetch(`${API}/api/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+            const data=await res.json();
+            if(res.ok){showAlert('registerAlert','✅ Registered! Login karein.','success');setTimeout(()=>{closeModal('registerModal');showModal('loginModal');},1500);}
+            else{showAlert('registerAlert',data.message||'Failed','error');}
+        }catch(e){showAlert('registerAlert','Server error','error');}
+    }
+
+    function logout(){
+        if(stompClient)stompClient.disconnect();
+        if(notifStompClient)notifStompClient.disconnect();
+        if(heartbeatInterval)clearInterval(heartbeatInterval);
+        localStorage.clear();token=null;currentUser=null;
+        document.getElementById('heroSection').style.display='block';
+        document.getElementById('dashboard').classList.remove('active');
+        document.getElementById('navLinks').style.display='flex';
+        document.getElementById('userNav').style.display='none';
+    }
+
+    // ===== OTP =====
+    async function sendOtp(){
+        const email=document.getElementById('forgotEmail').value.trim();
+        if(!email){showAlert('forgotAlert','Enter email','error');return;}
+        try{
+            const res=await fetch(`${API}/api/auth/forgot-password?email=${encodeURIComponent(email)}`,{method:'POST'});
+            const data=await res.json();
+            if(res.ok){showAlert('forgotAlert','✅ OTP sent!','success');setTimeout(()=>{document.getElementById('forgotStep1').style.display='none';document.getElementById('forgotStep2').style.display='block';},1000);}
+            else{showAlert('forgotAlert',data.message||'Failed','error');}
+        }catch(e){showAlert('forgotAlert','Error','error');}
+    }
+
+    function otpMove(el,next){if(el.value&&next<=5)document.getElementById('otp'+next).focus();}
+
+    async function resetPassword(){
+        const email=document.getElementById('forgotEmail').value.trim();
+        const otp=[0,1,2,3,4,5].map(i=>document.getElementById('otp'+i).value).join('');
+        const newPassword=document.getElementById('newPassword').value;
+        if(otp.length<6){showAlert('forgotAlert','Enter complete OTP','error');return;}
+        try{
+            const res=await fetch(`${API}/api/auth/reset-password?email=${encodeURIComponent(email)}&otp=${otp}&newPassword=${encodeURIComponent(newPassword)}`,{method:'POST'});
+            const data=await res.json();
+            if(res.ok){showAlert('forgotAlert','✅ Password reset!','success');setTimeout(()=>{closeModal('forgotModal');showModal('loginModal');},1500);}
+            else{showAlert('forgotAlert',data.message||'Failed','error');}
+        }catch(e){showAlert('forgotAlert','Error','error');}
+    }
+
+    // ===== DASHBOARD =====
+    function showDashboard(){
+        document.getElementById('heroSection').style.display='none';
+        document.getElementById('dashboard').classList.add('active');
+        document.getElementById('navLinks').style.display='none';
+        document.getElementById('userNav').style.display='block';
+        document.getElementById('userName').textContent=currentUser.email.split('@')[0];
+        document.getElementById('userAvatar').textContent=currentUser.email.charAt(0).toUpperCase();
+        const badge=document.getElementById('userRoleBadge');
+        badge.textContent=currentUser.role;
+        badge.className=`role-badge role-${currentUser.role.toLowerCase()}`;
+
+        if(currentUser.role==='DOCTOR'){
+            document.getElementById('dashboardTitle').textContent='👨‍⚕️ Doctor Dashboard';
+            document.getElementById('tab1').textContent='👥 My Patients';
+            document.getElementById('tab3').textContent='📋 Patient Records';
+            document.getElementById('firstTabTitle').textContent='Patients with Confirmed Appointments';
+            document.getElementById('searchBar').style.display='none';
+            document.getElementById('addPrescriptionBtn').style.display='block';
+            document.getElementById('analyticsTabBtn').style.display='block';
+            document.getElementById('calendarTabBtn').style.display='block';
+            loadPatientsForDoctor();
+            startHeartbeat();
+            initMedicineRows();
+        }else if(currentUser.role==='ADMIN'){
+            document.getElementById('dashboardTitle').textContent='🛡️ Admin Dashboard';
+            document.getElementById('tab1').textContent='🩺 Doctors';
+            document.getElementById('adminTabBtn').style.display='block';
+            document.getElementById('analyticsTabBtn').style.display='block';
+            document.getElementById('firstTabTitle').textContent='All Doctors';
+            loadDoctors();
+        }else{
+            document.getElementById('dashboardTitle').textContent='🏥 Patient Dashboard';
+            document.getElementById('tab1').textContent='🩺 Find Doctors';
+            document.getElementById('firstTabTitle').textContent='Available Doctors';
+            loadDoctors();
+        }
+        connectNotifications();
+        loadReports();
+    }
+
+    function startHeartbeat(){
+        const ping=()=>fetch(`${API}/api/doctors/${currentUser.userId}/heartbeat`,{method:'POST',headers:{'Authorization':`Bearer ${token}`}}).catch(()=>{});
+        ping();heartbeatInterval=setInterval(ping,180000);
+    }
+
+    // ===== TABS =====
+    function switchTab(tab,el){
+        document.querySelectorAll('#mainTabs .tab').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.dashboard > .tab-content').forEach(t=>t.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+        if(tab==='appointments')loadAppointments();
+        if(tab==='medical')loadMedicalHistory();
+        if(tab==='profile')loadProfile();
+        if(tab==='analytics')loadAnalytics();
+        if(tab==='admin'){loadAdminStats();loadAdminDoctors();}
+        if(tab==='calendar')renderCalendar();
+        if(tab==='reports')loadReports();
+    }
+
+    function switchAdminTab(tab,el){
+        document.querySelectorAll('#tab-admin .tabs .tab').forEach(t=>t.classList.remove('active'));
+        el.classList.add('active');
+        if(tab==='doctors')loadAdminDoctors();
+        if(tab==='patients')loadAdminPatients();
+        if(tab==='appointments')loadAdminAppointments();
+        if(tab==='platform')loadPlatformAnalytics();
+    }
+
+    // ===== DOCTORS =====
+    let filterTimeout;
+    async function loadDoctors(){
+        const grid=document.getElementById('firstTabGrid');
+        grid.innerHTML='<p class="loading">Loading...</p>';
+        try{
+            const res=await fetch(`${API}/api/doctors`,{headers:{'Authorization':`Bearer ${token}`}});
+            allDoctors=await res.json();
+            renderDoctors(allDoctors);
+        }catch(e){grid.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+    }
+
+    function filterDoctors(){
+        clearTimeout(filterTimeout);
+        filterTimeout=setTimeout(()=>{
+            const name=document.getElementById('searchName').value.toLowerCase();
+            const spec=document.getElementById('filterSpec').value;
+            const maxFee=parseFloat(document.getElementById('filterMaxFee').value)||Infinity;
+            renderDoctors(allDoctors.filter(d=>(!name||d.fullName.toLowerCase().includes(name))&&(!spec||d.specialization===spec)&&(d.consultationFee<=maxFee)));
+        },300);
+    }
+
+    function renderDoctors(doctors){
+        const grid=document.getElementById('firstTabGrid');
+        if(!doctors.length){grid.innerHTML=`<div class="empty-state"><div class="empty-icon">🩺</div><p>No doctors found.</p></div>`;return;}
+        grid.innerHTML=doctors.map(d=>`
+            <div class="info-card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div><h3>Dr. ${d.fullName}</h3><div class="spec" style="color:var(--accent);">${d.specialization?.replace(/_/g,' ')}</div></div>
+                    <div><span class="online-dot ${d.availableForOnlineConsult?'dot-green':'dot-red'}"></span><span style="font-size:0.72rem;color:var(--muted2);">${d.availableForOnlineConsult?'Online':'Offline'}</span></div>
+                </div>
+                <div class="info">🏥 ${d.hospitalName||'N/A'}</div>
+                <div class="info">🎓 ${d.qualification||'N/A'}</div>
+                <div class="info">⏱ ${d.experienceYears||0} yrs experience</div>
+                <div class="info">💰 ₹${d.consultationFee||0} per visit</div>
+                ${d.averageRating?`<div class="info"><span class="stars">${'★'.repeat(Math.round(d.averageRating))}${'☆'.repeat(5-Math.round(d.averageRating))}</span> <span style="font-size:0.75rem;color:var(--muted2);">${d.averageRating} (${d.totalReviews})</span></div>`:''}
+                <div class="card-footer">
+                    ${currentUser.role==='PATIENT'?`<button class="btn btn-outline btn-sm" onclick="openReview(${d.id})">⭐ Rate</button>`:''}
+                </div>
+            </div>`).join('');
+    }
+
+    // ===== PATIENTS (Doctor) =====
+    async function loadPatientsForDoctor(){
+        const grid=document.getElementById('firstTabGrid');
+        grid.innerHTML='<p class="loading">Loading...</p>';
+        try{
+            const res=await fetch(`${API}/api/appointments/pending-patients`,{headers:{'Authorization':`Bearer ${token}`}});
+            const appts=await res.json();
+            if(!Array.isArray(appts)||!appts.length){grid.innerHTML=`<div class="empty-state"><div class="empty-icon">👥</div><p>No patients yet.</p></div>`;return;}
+            grid.innerHTML=appts.map(a=>`
+                <div class="info-card">
+                    <h3>👤 ${a.patient.fullName}</h3>
+                    <div class="spec" style="color:var(--success);">PATIENT</div>
+                    <div class="info">📧 ${a.patient.email}</div>
+                    <div class="info">📱 ${a.patient.phone||'N/A'}</div>
+                    <div class="info">🤒 ${a.symptoms||'N/A'}</div>
+                    <div class="info">📅 ${new Date(a.appointmentTime).toLocaleString('en-IN')}</div>
+                    <div class="card-footer">
+                        <span class="badge badge-blue">${a.status}</span>
+                        ${a.meetingRoomId?`
+                        <button class="btn btn-primary btn-sm" onclick="openChat('${a.meetingRoomId}','${a.patient.fullName}')">💬</button>
+                        <button class="btn btn-outline btn-sm" onclick="window.open('/call.html?room=${a.meetingRoomId}','_blank')">📹</button>`:''}
+                    </div>
+                </div>`).join('');
+        }catch(e){grid.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+    }
+
+    // ===== APPOINTMENTS =====
+    async function loadAppointments(){
+        const list=document.getElementById('appointmentList');
+        list.innerHTML='<p class="loading">Loading...</p>';
+        try{
+            const endpoint=currentUser.role==='DOCTOR'?`/api/appointments/doctor/${currentUser.userId}`:`/api/appointments/patient/${currentUser.userId}`;
+            const res=await fetch(`${API}${endpoint}`,{headers:{'Authorization':`Bearer ${token}`}});
+            const appts=await res.json();
+            if(!Array.isArray(appts)||!appts.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">📅</div><p>No appointments.</p></div>`;return;}
+            list.innerHTML=appts.map(a=>`
+                <div class="appointment-item">
+                    <div class="appt-info">
+                        <h4>${currentUser.role==='DOCTOR'?'👤 '+a.patient.fullName:'👨‍⚕️ Dr. '+a.doctor.fullName}</h4>
+                        ${currentUser.role==='DOCTOR'?`<p>📧 ${a.patient.email}</p>`:`<p>🏥 ${a.doctor.hospitalName||'N/A'} | ${a.doctor.specialization?.replace(/_/g,' ')}</p>`}
+                        <p>📅 ${new Date(a.appointmentTime).toLocaleString('en-IN')}</p>
+                        <p>🤒 ${a.symptoms||'N/A'}</p>
+                    </div>
+                    <div class="appt-actions">
+                        <span class="badge ${a.status==='CONFIRMED'?'badge-green':a.status==='CANCELLED'?'badge-red':a.status==='COMPLETED'?'badge-blue':'badge-yellow'}">${a.status}</span>
+                        ${a.meetingRoomId&&a.status==='CONFIRMED'?`
+                        <button class="btn btn-primary btn-sm" onclick="openChat('${a.meetingRoomId}','${currentUser.role==='DOCTOR'?a.patient.fullName:'Dr. '+a.doctor.fullName}')">💬</button>
+                        <button class="btn btn-outline btn-sm" onclick="window.open('/call.html?room=${a.meetingRoomId}','_blank')">📹</button>`:''}
+                        ${a.status==='CONFIRMED'?`<button class="btn btn-warning btn-sm" onclick="openReschedule(${a.id},${currentUser.role==='DOCTOR'?a.doctor.id:a.doctor.id})">🔄 Reschedule</button>`:''}
+                        ${currentUser.role==='PATIENT'&&a.status==='CONFIRMED'?`<button class="btn btn-success btn-sm" onclick="openPayment(${a.id},'${a.doctor.fullName}',${a.doctor.consultationFee||500})">💳 Pay</button>`:''}
+                    </div>
+                </div>`).join('');
+        }catch(e){list.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+    }
+
+    // ===== RESCHEDULE =====
+    function openReschedule(apptId,doctorId){
+        document.getElementById('rescheduleApptId').value=apptId;
+        document.getElementById('rescheduleDoctorId').value=doctorId;
+        document.getElementById('rescheduleSelectedSlot').value='';
+        document.getElementById('rescheduleSlotsContainer').style.display='none';
+        const today=new Date().toISOString().split('T')[0];
+        document.getElementById('rescheduleDate').min=today;
+        document.getElementById('rescheduleDate').value='';
+        showModal('rescheduleModal');
+    }
+
+    async function loadRescheduleSlots(){
+        const date=document.getElementById('rescheduleDate').value;
+        const doctorId=document.getElementById('rescheduleDoctorId').value;
+        if(!date)return;
+        try{
+            const res=await fetch(`${API}/api/appointments/slots/${doctorId}?date=${date}`,{headers:{'Authorization':`Bearer ${token}`}});
+            const slots=await res.json();
+            const container=document.getElementById('rescheduleSlotsContainer');
+            const grid=document.getElementById('rescheduleSlots');
+            container.style.display='block';
+            if(!slots.length){grid.innerHTML='<p style="color:var(--muted2);font-size:0.85rem;">No slots available.</p>';return;}
+            grid.innerHTML=slots.map(s=>`
+                <div class="slot-btn" onclick="selectSlot(this,${s.id})">
+                    ${s.startTime?.substring(0,5)} - ${s.endTime?.substring(0,5)}
+                </div>`).join('');
+        }catch(e){showAlert('rescheduleAlert','Failed to load slots','error');}
+    }
+
+    function selectSlot(el,slotId){
+        document.querySelectorAll('.slot-btn').forEach(b=>b.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('rescheduleSelectedSlot').value=slotId;
+    }
+
+    async function confirmReschedule(){
+        const apptId=document.getElementById('rescheduleApptId').value;
+        const slotId=document.getElementById('rescheduleSelectedSlot').value;
+        if(!slotId){showAlert('rescheduleAlert','Select a slot','error');return;}
+        try{
+            const res=await fetch(`${API}/api/appointments/${apptId}/reschedule?newSlotId=${slotId}`,{method:'PATCH',headers:{'Authorization':`Bearer ${token}`}});
+            if(res.ok){
+                showAlert('rescheduleAlert','✅ Rescheduled!','success');
+                addNotification('📅 Appointment rescheduled successfully','RESCHEDULE');
+                setTimeout(()=>{closeModal('rescheduleModal');loadAppointments();},1200);
+            }else{showAlert('rescheduleAlert','Failed','error');}
+        }catch(e){showAlert('rescheduleAlert','Error','error');}
+    }
+
+    // ===== CALENDAR =====
+    async function renderCalendar(){
+        const year=calendarDate.getFullYear();
+        const month=calendarDate.getMonth();
+        document.getElementById('calMonthYear').textContent=calendarDate.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+
+        const firstDay=new Date(year,month,1).getDay();
+        const daysInMonth=new Date(year,month+1,0).getDate();
+        const today=new Date();
+
+        // Load appointments for this month
+        const startDate=`${year}-${String(month+1).padStart(2,'0')}-01`;
+        const endDate=`${year}-${String(month+1).padStart(2,'0')}-${daysInMonth}`;
+        let apptMap={};
+        try{
+            const res=await fetch(`${API}/api/appointments/doctor/${currentUser.userId}/calendar?startDate=${startDate}&endDate=${endDate}`,{headers:{'Authorization':`Bearer ${token}`}});
+            if(res.ok)apptMap=await res.json();
+        }catch(e){}
+
+        const grid=document.getElementById('calendarGrid');
+        const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        let html=days.map(d=>`<div class="cal-day-header">${d}</div>`).join('');
+
+        for(let i=0;i<firstDay;i++)html+=`<div></div>`;
+
+        for(let d=1;d<=daysInMonth;d++){
+            const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const isToday=today.getDate()===d&&today.getMonth()===month&&today.getFullYear()===year;
+            const hasAppt=apptMap[dateStr]&&apptMap[dateStr].length>0;
+            const count=hasAppt?apptMap[dateStr].length:0;
+            html+=`<div class="cal-day ${isToday?'today':''} ${hasAppt?'has-appt':''}" onclick="showCalDay('${dateStr}',${JSON.stringify(hasAppt?apptMap[dateStr]:[]).replace(/"/g,"'")})">
+                <div class="cal-day-num">${d}</div>
+                ${hasAppt?`<div>${Array(Math.min(count,3)).fill('<span class="cal-appt-dot"></span>').join('')}${count>3?`<span style="font-size:0.65rem;color:var(--muted2);">+${count-3}</span>`:''}</div>`:''}
+            </div>`;
+        }
+        grid.innerHTML=html;
+    }
+
+    function showCalDay(date,appts){
+        const detail=document.getElementById('calDayDetail');
+        if(!appts||!appts.length){detail.innerHTML=`<p style="color:var(--muted2);font-size:0.85rem;">No appointments on ${date}</p>`;return;}
+        detail.innerHTML=`<p class="section-title" style="margin-top:1rem;">📅 ${date}</p>`+appts.map(a=>`
+            <div class="appointment-item" style="margin-bottom:0.5rem;">
+                <div class="appt-info">
+                    <h4>👤 ${a.patient?.fullName||'Patient'}</h4>
+                    <p>🕐 ${new Date(a.appointmentTime).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</p>
+                    <p>🤒 ${a.symptoms||'N/A'}</p>
+                </div>
+                <span class="badge ${a.status==='CONFIRMED'?'badge-green':'badge-blue'}">${a.status}</span>
+            </div>`).join('');
+    }
+
+    function changeMonth(dir){calendarDate.setMonth(calendarDate.getMonth()+dir);renderCalendar();}
+
+    // ===== REPORTS =====
+    async function loadReports(){
+        const list=document.getElementById('reportsList');
+        try{
+            const res=await fetch(`${API}/api/reports/${currentUser.userId}`,{headers:{'Authorization':`Bearer ${token}`}});
+            const reports=await res.json();
+            if(!reports.length){list.innerHTML='<p style="color:var(--muted2);font-size:0.85rem;margin-top:0.5rem;">No reports uploaded yet.</p>';return;}
+            list.innerHTML='<div class="report-list">'+reports.map(r=>`
+                <div class="report-item">
+                    <span>📄 ${r.fileName}</span>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <span style="color:var(--muted2);font-size:0.75rem;">${(r.size/1024).toFixed(1)} KB</span>
+                        <a href="${API}${r.fileUrl}" target="_blank" class="btn btn-outline btn-xs">View</a>
+                    </div>
+                </div>`).join('')+'</div>';
+        }catch(e){list.innerHTML='<p style="color:var(--muted2);">Load reports tab to view.</p>';}
+    }
+
+    async function uploadReport(input){
+        const file=input.files[0];
+        if(!file)return;
+        const formData=new FormData();
+        formData.append('file',file);
+        formData.append('reportType','Medical Report');
+        try{
+            const res=await fetch(`${API}/api/reports/upload/${currentUser.userId}`,{method:'POST',headers:{'Authorization':`Bearer ${token}`},body:formData});
+            if(res.ok){addNotification('📁 Report uploaded: '+file.name,'REPORT');loadReports();}
+            else{alert('Upload failed.');}
+        }catch(e){alert('Error uploading.');}
+        input.value='';
+    }
+
+    // ===== MEDICAL HISTORY =====
+    async function loadMedicalHistory(){
+        const list=document.getElementById('medicalList');
+        list.innerHTML='<p class="loading">Loading...</p>';
+        try{
+            const endpoint=currentUser.role==='DOCTOR'?`/api/medical/doctor/${currentUser.userId}`:`/api/medical/patient/${currentUser.userId}`;
+            const res=await fetch(`${API}${endpoint}`,{headers:{'Authorization':`Bearer ${token}`}});
+            const records=await res.json();
+            if(!Array.isArray(records)||!records.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>No records.</p></div>`;return;}
+            list.innerHTML=records.map(r=>`
+                <div class="medical-item">
+                    <div class="medical-header">
+                        <div>
+                            <h4>🔍 ${r.diagnosis||'Pending'}</h4>
+                            <div class="meta">${currentUser.role==='DOCTOR'?`👤 <strong style="color:var(--accent)">${r.patient.fullName}</strong>`:`👨‍⚕️ Dr. <strong style="color:var(--accent)">${r.doctor.fullName}</strong> • ${r.doctor.specialization?.replace(/_/g,' ')}`}</div>
+                        </div>
+                        <div class="meta">${new Date(r.createdAt).toLocaleDateString('en-IN')}</div>
+                    </div>
+                    <div class="detail">🤒 <b>Symptoms:</b> ${r.symptoms||'N/A'}</div>
+                    <div class="detail">📝 <b>Notes:</b> ${r.doctorNotes||'N/A'}</div>
+                    <div class="treatment">💊 <b>Treatment:</b> ${r.treatmentPlan||'N/A'}</div>
+                </div>`).join('');
+        }catch(e){list.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+    }
+
+    // ===== PROFILE =====
+    async function loadProfile(){
+        const form=document.getElementById('profileForm');
+        form.innerHTML='<p class="loading">Loading...</p>';
+        if(currentUser.role==='PATIENT'){
+            try{
+                const res=await fetch(`${API}/api/patients/${currentUser.userId}`,{headers:{'Authorization':`Bearer ${token}`}});
+                const p=await res.json();
+                form.innerHTML=`
+                    <div class="form-row"><div class="form-group"><label>Full Name</label><input id="pName" value="${p.fullName||''}"></div><div class="form-group"><label>Phone</label><input id="pPhone" value="${p.phone||''}"></div></div>
+                    <div class="form-row"><div class="form-group"><label>Date of Birth</label><input type="date" id="pDob" value="${p.dateOfBirth||''}"></div><div class="form-group"><label>Gender</label><select id="pGender"><option ${p.gender==='Male'?'selected':''}>Male</option><option ${p.gender==='Female'?'selected':''}>Female</option><option ${p.gender==='Other'?'selected':''}>Other</option></select></div></div>
+                    <div class="form-row"><div class="form-group"><label>Blood Group</label><select id="pBlood">${['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(b=>`<option ${p.bloodGroup===b?'selected':''}>${b}</option>`).join('')}</select></div><div class="form-group"><label>Height (cm)</label><input type="number" id="pHeight" value="${p.heightCm||''}"></div></div>
+                    <div class="form-row"><div class="form-group"><label>Weight (kg)</label><input type="number" id="pWeight" value="${p.weightKg||''}"></div><div class="form-group"><label>Emergency Phone</label><input id="pEmergency" value="${p.emergencyContactPhone||''}"></div></div>
+                    <div class="form-group"><label>Allergies</label><input id="pAllergies" value="${p.allergies||''}"></div>
+                    <div class="form-group"><label>Chronic Conditions</label><input id="pChronic" value="${p.chronicConditions||''}"></div>
+                    <div class="form-group"><label>Address</label><input id="pAddress" value="${p.address||''}"></div>
+                    <button class="btn btn-primary" onclick="savePatientProfile(${p.id})">💾 Save Profile</button>`;
+            }catch(e){form.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+        }else if(currentUser.role==='DOCTOR'){
+            try{
+                const res=await fetch(`${API}/api/doctors/${currentUser.userId}`,{headers:{'Authorization':`Bearer ${token}`}});
+                const d=await res.json();
+                form.innerHTML=`
+                    <div class="form-group"><label>Bio</label><input id="dBio" value="${d.bio||''}"></div>
+                    <div class="form-row"><div class="form-group"><label>Hospital</label><input id="dHospital" value="${d.hospitalName||''}"></div><div class="form-group"><label>Fee (₹)</label><input type="number" id="dFee" value="${d.consultationFee||''}"></div></div>
+                    <div class="form-group"><label>Hospital Address</label><input id="dHospitalAddr" value="${d.hospitalAddress||''}"></div>
+                    <div style="margin-bottom:1rem;"><p style="color:var(--muted2);font-size:0.82rem;margin-bottom:0.5rem;">Online Status</p>
+                    <button class="btn btn-success btn-sm" onclick="setDoctorOnline()">🟢 Set Online</button>
+                    <button class="btn btn-danger btn-sm" onclick="setDoctorOffline()" style="margin-left:0.5rem;">🔴 Set Offline</button></div>
+                    <button class="btn btn-primary" onclick="saveDoctorProfile(${d.id})">💾 Save</button>`;
+            }catch(e){form.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+        }else{form.innerHTML=`<div class="empty-state"><div class="empty-icon">🛡️</div><p>Admin account. Use Admin tab.</p></div>`;}
+    }
+
+    async function savePatientProfile(id){
+        const body={dateOfBirth:document.getElementById('pDob').value||null,gender:document.getElementById('pGender').value,bloodGroup:document.getElementById('pBlood').value,heightCm:parseFloat(document.getElementById('pHeight').value)||null,weightKg:parseFloat(document.getElementById('pWeight').value)||null,allergies:document.getElementById('pAllergies').value,chronicConditions:document.getElementById('pChronic').value,emergencyContactPhone:document.getElementById('pEmergency').value,address:document.getElementById('pAddress').value};
+        const res=await fetch(`${API}/api/patients/${id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(body)});
+        if(res.ok)alert('✅ Saved!');else alert('Failed.');
+    }
+
+    async function saveDoctorProfile(id){
+        const body={hospitalName:document.getElementById('dHospital').value,hospitalAddress:document.getElementById('dHospitalAddr').value,consultationFee:parseFloat(document.getElementById('dFee').value)||0,bio:document.getElementById('dBio').value};
+        const res=await fetch(`${API}/api/doctors/${id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(body)});
+        if(res.ok)alert('✅ Saved!');else alert('Failed.');
+    }
+
+    async function setDoctorOnline(){await fetch(`${API}/api/doctors/${currentUser.userId}/heartbeat`,{method:'POST',headers:{'Authorization':`Bearer ${token}`}});alert('🟢 Online!');}
+    async function setDoctorOffline(){await fetch(`${API}/api/doctors/${currentUser.userId}/availability`,{method:'PATCH',headers:{'Authorization':`Bearer ${token}`}});alert('🔴 Offline!');}
+
+    // ===== AI SYMPTOM =====
+    async function checkSymptoms(){
+        const symptoms=document.getElementById('symptomsInput').value.trim();
+        if(!symptoms){alert('Describe your symptoms.');return;}
+        const resultBox=document.getElementById('symptomResult');
+        const resultText=document.getElementById('symptomResultText');
+        resultText.textContent='🔄 Analyzing...';
+        resultBox.classList.add('show');
+        try{
+            const res=await fetch(`${API}/api/symptoms/check`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({symptoms})});
+            const data=await res.json();
+            resultText.textContent=res.ok?data.suggestion:'Could not analyze.';
+        }catch(e){resultText.textContent='Server error.';}
+    }
+
+    // ===== ANALYTICS =====
+    async function loadAnalytics(){
+        const grid=document.getElementById('analyticsGrid');
+        grid.innerHTML='<p class="loading">Loading...</p>';
+        try{
+            const endpoint=currentUser.role==='ADMIN'?`/api/analytics/platform`:`/api/analytics/doctor/${currentUser.userId}`;
+            const res=await fetch(`${API}${endpoint}`,{headers:{'Authorization':`Bearer ${token}`}});
+            const data=await res.json();
+            if(currentUser.role==='DOCTOR'){
+                grid.innerHTML=`
+                    <div class="analytics-card"><div class="a-val" style="color:var(--primary-light);">${data.totalAppointments||0}</div><div class="a-lbl">Total Appointments</div></div>
+                    <div class="analytics-card"><div class="a-val" style="color:var(--success);">${data.completedAppointments||0}</div><div class="a-lbl">Completed</div><div class="a-sub">${data.completionRate||0}% rate</div></div>
+                    <div class="analytics-card"><div class="a-val" style="color:var(--warning);">${data.confirmedAppointments||0}</div><div class="a-lbl">Upcoming</div></div>
+                    <div class="analytics-card"><div class="a-val" style="color:var(--danger);">${data.cancelledAppointments||0}</div><div class="a-lbl">Cancelled</div></div>
+                    <div class="analytics-card"><div class="a-val" style="color:#fbbf24;">₹${data.estimatedEarnings||0}</div><div class="a-lbl">Est. Earnings</div></div>`;
+            }else{
+                grid.innerHTML=`
+                    <div class="analytics-card"><div class="a-val" style="color:var(--primary-light);">${data.totalAppointments||0}</div><div class="a-lbl">Total Appointments</div></div>
+                    <div class="analytics-card"><div class="a-val" style="color:var(--success);">${data.completedAppointments||0}</div><div class="a-lbl">Completed</div></div>
+                    <div class="analytics-card"><div class="a-val" style="color:var(--primary-light);">${data.totalDoctors||0}</div><div class="a-lbl">Doctors</div></div>
+                    <div class="analytics-card"><div class="a-val" style="color:var(--success);">${data.totalPatients||0}</div><div class="a-lbl">Patients</div></div>`;
+            }
+        }catch(e){grid.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+    }
+
+    // ===== PRESCRIPTION =====
+    function initMedicineRows(){document.getElementById('medicineRows').innerHTML='';addMedicineRow();addMedicineRow();}
+    function addMedicineRow(){
+        const row=document.createElement('div');
+        row.className='medicine-row';
+        row.innerHTML=`<input placeholder="Medicine" class="med-name"><input placeholder="500mg" class="med-dosage"><input placeholder="Twice daily" class="med-freq"><input placeholder="7 days" class="med-dur"><input placeholder="After meals" class="med-inst"><button class="btn btn-danger btn-xs" onclick="this.parentElement.remove()">✕</button>`;
+        document.getElementById('medicineRows').appendChild(row);
+    }
+
+    async function generatePrescription(){
+        const patientId=document.getElementById('prescPatientId').value;
+        if(!patientId){showAlert('prescAlert','Enter patient ID','error');return;}
+        const medicines=[];
+        document.querySelectorAll('.medicine-row').forEach(row=>{
+            const name=row.querySelector('.med-name').value.trim();
+            if(name)medicines.push({medicineName:name,dosage:row.querySelector('.med-dosage').value,frequency:row.querySelector('.med-freq').value,duration:row.querySelector('.med-dur').value,instructions:row.querySelector('.med-inst').value});
+        });
+        if(!medicines.length){showAlert('prescAlert','Add at least one medicine','error');return;}
+        try{
+            showAlert('prescAlert','⏳ Generating...','success');
+            const res=await fetch(`${API}/api/prescriptions/generate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({doctorId:currentUser.userId,patientId:parseInt(patientId),medicalHistoryId:document.getElementById('prescHistoryId').value?parseInt(document.getElementById('prescHistoryId').value):null,notes:document.getElementById('prescNotes').value,medicines})});
+            if(res.ok){
+                const blob=await res.blob();
+                const url=URL.createObjectURL(blob);
+                const a=document.createElement('a');a.href=url;a.download='prescription.pdf';a.click();
+                URL.revokeObjectURL(url);
+                addNotification('📄 Prescription generated & emailed','PRESCRIPTION');
+                showAlert('prescAlert','✅ PDF downloaded!','success');
+            }else{showAlert('prescAlert','Failed','error');}
+        }catch(e){showAlert('prescAlert','Error: '+e.message,'error');}
+    }
+
+    // ===== PAYMENT =====
+    function openPayment(apptId,doctorName,amount){
+        document.getElementById('payDoctorName').textContent='Dr. '+doctorName;
+        document.getElementById('payApptId').textContent='#'+apptId;
+        document.getElementById('payAmount').textContent='₹'+amount;
+        document.getElementById('payAppointmentId').value=apptId;
+        document.getElementById('payAmountValue').value=amount;
+        showModal('paymentModal');
+    }
+
+    async function initiatePayment(){
+        const apptId=document.getElementById('payAppointmentId').value;
+        const amount=document.getElementById('payAmountValue').value;
+        try{
+            const res=await fetch(`${API}/api/payment/create-order?amount=${amount}&appointmentId=${apptId}`,{method:'POST',headers:{'Authorization':`Bearer ${token}`}});
+            const data=await res.json();
+            if(!res.ok){showAlert('paymentAlert','Payment setup failed','error');return;}
+            const options={key:data.keyId,amount:data.amount*100,currency:'INR',name:'MediConnect',description:'Consultation Fee',order_id:data.orderId,handler:function(response){closeModal('paymentModal');addNotification('✅ Payment successful: '+response.razorpay_payment_id,'PAYMENT');alert('✅ Payment Successful!\nID: '+response.razorpay_payment_id);},prefill:{email:currentUser.email},theme:{color:'#3b82f6'}};
+            const rzp=new Razorpay(options);rzp.open();closeModal('paymentModal');
+        }catch(e){showAlert('paymentAlert','Error: '+e.message,'error');}
+    }
+
+    // ===== RATING =====
+    function openReview(doctorId){document.getElementById('reviewDoctorId').value=doctorId;setRating(0);showModal('reviewModal');}
+    function setRating(n){document.querySelectorAll('#starInput span').forEach((s,i)=>s.classList.toggle('active',i<n));document.getElementById('reviewDoctorId').dataset.rating=n;}
+    async function submitReview(){
+        const doctorId=document.getElementById('reviewDoctorId').value;
+        const rating=parseInt(document.getElementById('reviewDoctorId').dataset.rating||0);
+        if(!rating){showAlert('reviewAlert','Select rating','error');return;}
+        const res=await fetch(`${API}/api/doctors/${doctorId}/review`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({doctorId,patientId:currentUser.userId,rating})});
+        if(res.ok){showAlert('reviewAlert','✅ Submitted!','success');setTimeout(()=>{closeModal('reviewModal');loadDoctors();},1200);}
+        else{showAlert('reviewAlert','Failed','error');}
+    }
+
+    // ===== ADMIN =====
+    async function loadAdminStats(){
+        try{
+            const res=await fetch(`${API}/api/admin/stats`,{headers:{'Authorization':`Bearer ${token}`}});
+            const s=await res.json();
+            document.getElementById('adminStatsGrid').innerHTML=`
+                <div class="stat-card"><div class="val">${s.totalDoctors||0}</div><div class="lbl">Doctors</div></div>
+                <div class="stat-card"><div class="val">${s.totalPatients||0}</div><div class="lbl">Patients</div></div>
+                <div class="stat-card"><div class="val">${s.totalAppointments||0}</div><div class="lbl">Appointments</div></div>
+                <div class="stat-card"><div class="val">${s.totalUsers||0}</div><div class="lbl">Users</div></div>`;
+        }catch(e){}
+    }
+
+    async function loadAdminDoctors(){
+        const c=document.getElementById('adminContent');c.innerHTML='<p class="loading">Loading...</p>';
+        try{
+            const res=await fetch(`${API}/api/admin/doctors`,{headers:{'Authorization':`Bearer ${token}`}});
+            const doctors=await res.json();
+            c.innerHTML=`<table class="admin-table"><thead><tr><th>Name</th><th>Specialization</th><th>Hospital</th><th>Fee</th><th>Status</th><th>Action</th></tr></thead><tbody>${doctors.map(d=>`<tr><td>Dr. ${d.fullName}</td><td>${d.specialization?.replace(/_/g,' ')}</td><td>${d.hospitalName||'N/A'}</td><td>₹${d.consultationFee||0}</td><td><span class="badge ${d.availableForOnlineConsult?'badge-green':'badge-red'}">${d.availableForOnlineConsult?'Online':'Offline'}</span></td><td><button class="btn btn-outline btn-xs" onclick="adminToggle(${d.id})">Toggle</button></td></tr>`).join('')}</tbody></table>`;
+        }catch(e){c.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+    }
+
+    async function loadAdminPatients(){
+        const c=document.getElementById('adminContent');c.innerHTML='<p class="loading">Loading...</p>';
+        try{
+            const res=await fetch(`${API}/api/admin/patients`,{headers:{'Authorization':`Bearer ${token}`}});
+            const patients=await res.json();
+            c.innerHTML=`<table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Blood Group</th><th>Gender</th></tr></thead><tbody>${patients.map(p=>`<tr><td>${p.fullName}</td><td>${p.email}</td><td>${p.phone||'N/A'}</td><td>${p.bloodGroup||'N/A'}</td><td>${p.gender||'N/A'}</td></tr>`).join('')}</tbody></table>`;
+        }catch(e){c.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+    }
+
+    async function loadAdminAppointments(){
+        const c=document.getElementById('adminContent');c.innerHTML='<p class="loading">Loading...</p>';
+        try{
+            const res=await fetch(`${API}/api/admin/appointments`,{headers:{'Authorization':`Bearer ${token}`}});
+            const appts=await res.json();
+            c.innerHTML=`<table class="admin-table"><thead><tr><th>Patient</th><th>Doctor</th><th>Time</th><th>Status</th></tr></thead><tbody>${appts.map(a=>`<tr><td>${a.patient.fullName}</td><td>Dr. ${a.doctor.fullName}</td><td>${new Date(a.appointmentTime).toLocaleString('en-IN')}</td><td><span class="badge ${a.status==='CONFIRMED'?'badge-green':a.status==='CANCELLED'?'badge-red':'badge-blue'}">${a.status}</span></td></tr>`).join('')}</tbody></table>`;
+        }catch(e){c.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+    }
+
+    async function loadPlatformAnalytics(){
+        const c=document.getElementById('adminContent');c.innerHTML='<p class="loading">Loading...</p>';
+        try{
+            const res=await fetch(`${API}/api/analytics/platform`,{headers:{'Authorization':`Bearer ${token}`}});
+            const data=await res.json();
+            c.innerHTML=`<div class="analytics-grid">
+                <div class="analytics-card"><div class="a-val" style="color:var(--primary-light);">${data.totalAppointments||0}</div><div class="a-lbl">Total Appointments</div></div>
+                <div class="analytics-card"><div class="a-val" style="color:var(--success);">${data.completedAppointments||0}</div><div class="a-lbl">Completed</div></div>
+                <div class="analytics-card"><div class="a-val" style="color:var(--warning);">${data.confirmedAppointments||0}</div><div class="a-lbl">Confirmed</div></div>
+                <div class="analytics-card"><div class="a-val" style="color:var(--primary-light);">${data.totalDoctors||0}</div><div class="a-lbl">Doctors</div></div>
+                <div class="analytics-card"><div class="a-val" style="color:var(--success);">${data.totalPatients||0}</div><div class="a-lbl">Patients</div></div>
+            </div>`;
+        }catch(e){c.innerHTML='<p style="color:var(--danger)">Failed.</p>';}
+    }
+
+    async function adminToggle(id){await fetch(`${API}/api/admin/doctors/${id}/toggle`,{method:'PATCH',headers:{'Authorization':`Bearer ${token}`}});loadAdminDoctors();}
+
+    // ===== CHAT =====
+    function openChat(roomId,name){
+        currentRoomId=roomId;
+        document.getElementById('chatTitle').textContent=`💬 ${name}`;
+        document.getElementById('chatMessages').innerHTML='';
+        document.getElementById('chatInput').value='';
+        showModal('chatModal');
+        connectWebSocket(roomId);
+    }
+    function closeChat(){
+        closeModal('chatModal');
+        if(stompClient?.connected){stompClient.disconnect();stompClient=null;}
+        currentRoomId=null;
+    }
+    function connectWebSocket(roomId){
+        const socket=new SockJS(`${API}/ws`);
+        stompClient=Stomp.over(socket);stompClient.debug=null;
+        stompClient.connect({},()=>{
+            stompClient.send(`/app/chat/${roomId}/join`,{},JSON.stringify({senderEmail:currentUser.email,senderName:currentUser.email.split('@')[0],type:'JOIN'}));
+            stompClient.subscribe(`/topic/chat/${roomId}`,msg=>displayMessage(JSON.parse(msg.body)));
+        },()=>addSysMsg('Connection failed.'));
+    }
+    function sendChatMessage(){
+        const input=document.getElementById('chatInput');
+        const content=input.value.trim();
+        if(!content||!stompClient?.connected)return;
+        stompClient.send(`/app/chat/${currentRoomId}`,{},JSON.stringify({senderEmail:currentUser.email,senderName:currentUser.email.split('@')[0],content,type:'CHAT'}));
+        input.value='';
+    }
+    function displayMessage(msg){
+        const c=document.getElementById('chatMessages');
+        if(msg.type==='JOIN'||msg.type==='LEAVE'){addSysMsg(`${msg.senderName} ${msg.type==='JOIN'?'joined':'left'}`);return;}
+        const div=document.createElement('div');
+        div.className=`chat-msg ${msg.senderEmail===currentUser.email?'sent':'received'}`;
+        div.innerHTML=`${msg.senderEmail!==currentUser.email?`<div class="msg-sender">${msg.senderName}</div>`:''}${msg.content}`;
+        c.appendChild(div);c.scrollTop=c.scrollHeight;
+    }
+    function addSysMsg(text){
+        const c=document.getElementById('chatMessages');
+        const div=document.createElement('div');
+        div.style.cssText='text-align:center;color:var(--muted);font-size:0.75rem;padding:0.3rem;';
+        div.textContent=text;c.appendChild(div);
+    }
+
+    // ===== UTILS =====
+    function showAlert(id,msg,type){
+        const el=document.getElementById(id);
+        if(!el)return;
+        el.textContent=msg;
+        el.className=`alert alert-${type}`;
+    }
+</script>
+</body>
+</html>
+<!--HTMLEOF-->
+<!--echo "Done"-->
