@@ -31,14 +31,29 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/call.html",
+                                "/*.html",
+                                "/*.js",
+                                "/*.css",
+                                "/*.ico",
+
                                 "/api/auth/**",
-                                "/v3/api-docs", "/v3/api-docs/**",
-                                "/swagger-ui/**", "/swagger-ui.html",
-                                "/swagger-ui/index.html", "/webjars/**",
-                                "/ws/**", "/uploads/**",
-                                "/", "/index.html",        // ← ye add karo
-                                "/*.html", "/*.js", "/*.css", "/*.ico"
+
+                                "/actuator/health",
+
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/index.html",
+                                "/webjars/**",
+
+                                "/ws/**",
+                                "/uploads/**"
                         ).permitAll()
+
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/analytics/**").hasAnyRole("DOCTOR", "ADMIN")
                         .requestMatchers("/api/payment/**").hasAnyRole("PATIENT", "ADMIN")
@@ -49,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/medical/**").hasAnyRole("DOCTOR", "PATIENT", "ADMIN")
                         .requestMatchers("/api/prescriptions/**").hasAnyRole("DOCTOR", "PATIENT", "ADMIN")
                         .requestMatchers("/api/reports/**").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
