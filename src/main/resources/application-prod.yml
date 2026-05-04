@@ -34,7 +34,7 @@ spring:
       org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
 server:
-  port: ${PORT:8080}
+  port: 10000
 
 jwt:
   secret: ${JWT_SECRET:mediconnectSuperSecretKeyForJWTSigning2024MustBe256BitsLong!!}
